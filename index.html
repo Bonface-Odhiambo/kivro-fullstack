@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kivro - Your Address, Powered by Your Phone</title>
+    <meta name="description" content="Get a secure, shareable digital address linked to your phone number. Perfect for deliveries, services, and identity verification - even without a traditional street address." />
+    <meta name="author" content="Kivro" />
+    <meta name="keywords" content="digital address, phone address, delivery address, location sharing, Kivro, address verification" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0EA5E9" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kivro" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/src/assets/kivro-logo.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/kivro-logo.jpg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- DM Sans — loaded via CSS, non-render-blocking -->
+    <link rel="preload" href="/fonts/dm-sans.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/fonts/dm-sans.css"></noscript>
+    <!-- Open Graph -->
+    <meta property="og:title" content="Kivro - Your Address, Powered by Your Phone" />
+    <meta property="og:description" content="Get a secure, shareable digital address linked to your phone number. Perfect for deliveries, services, and identity verification." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kivro.africa/" />
+    <meta property="og:image" content="https://kivro.africa/kivro-logo.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Kivro" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@kivroafrica" />
+    <meta name="twitter:title" content="Kivro - Your Address, Powered by Your Phone" />
+    <meta name="twitter:description" content="Get a secure, shareable digital address linked to your phone number. Perfect for deliveries across Africa." />
+    <meta name="twitter:image" content="https://kivro.africa/kivro-logo.jpg" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://kivro.africa/#organization",
+          "name": "Kivro",
+          "url": "https://kivro.africa",
+          "logo": "https://kivro.africa/kivro-logo.jpg",
+          "sameAs": [
+            "https://twitter.com/kivroafrica"
+          ],
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "url": "https://kivro.africa/contact",
+            "availableLanguage": ["English", "Swahili", "French", "Somali", "Arabic"]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://kivro.africa/#website",
+          "url": "https://kivro.africa",
+          "name": "Kivro",
+          "description": "Digital address platform for Africa",
+          "publisher": { "@id": "https://kivro.africa/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://kivro.africa/track?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Kivro",
+          "operatingSystem": "Web, Android, iOS",
+          "applicationCategory": "UtilitiesApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "Get a secure, shareable digital address linked to your phone number.",
+          "publisher": { "@id": "https://kivro.africa/#organization" }
+        }
+      ]
+    }
+    </script>
+    <style>
+    :root { --brand-primary: #0EA5E9; }
+    /* Tenant primary color propagates to Tailwind's primary via this var */
+    /* Components using style="color: var(--brand-primary)" will update automatically */
+  </style>
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

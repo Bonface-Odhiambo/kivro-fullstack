@@ -1,0 +1,76 @@
+KIVRO INBOX TROUBLESHOOTING GUIDE
+===================================
+
+ERRORS YOU'RE SEEING:
+1. ERR_CONNECTION_CLOSED - Supabase connection issues
+2. 401 Unauthorized - Backend API authentication failure
+
+SOLUTIONS:
+
+1. START THE BACKEND SERVER
+   ---------------------------
+   Open a terminal in the backend folder and run:
+   
+   cd C:\Users\USER\Desktop\kivro\backend
+   npm start
+   
+   The backend should start on http://localhost:3001
+   You should see: "Server running on port 3001"
+
+2. CHECK SUPABASE CONNECTION
+   --------------------------
+   The ERR_CONNECTION_CLOSED errors suggest:
+   - Check your internet connection
+   - Verify Supabase is accessible: https://dfcuyinwearuhlhrdssx.supabase.co
+   - Check if your firewall is blocking Supabase
+   
+3. VERIFY ENVIRONMENT VARIABLES
+   -----------------------------
+   Check backend/.env file has:
+   
+   SUPABASE_URL=https://dfcuyinwearuhlhrdssx.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-key
+   PORT=3001
+
+4. CHECK FRONTEND ENVIRONMENT
+   ---------------------------
+   Check src/.env or .env file has:
+   
+   VITE_API_URL=http://localhost:3001
+   VITE_SUPABASE_URL=https://dfcuyinwearuhlhrdssx.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+
+5. RESTART BOTH SERVERS
+   ---------------------
+   Terminal 1 (Backend):
+   cd backend
+   npm start
+   
+   Terminal 2 (Frontend):
+   npm run dev
+
+6. CLEAR BROWSER CACHE
+   --------------------
+   - Open DevTools (F12)
+   - Right-click refresh button
+   - Select "Empty Cache and Hard Reload"
+
+7. CHECK IF USER IS LOGGED IN
+   --------------------------
+   The 401 error suggests authentication issues.
+   Try logging out and logging back in.
+
+TESTING THE BACKEND:
+-------------------
+Open browser and test:
+http://localhost:3001/health (should return OK)
+
+If backend is not running, you'll see "Failed to fetch" errors.
+
+COMMON ISSUES:
+-------------
+- Backend not started: Start with "npm start" in backend folder
+- Port 3001 already in use: Kill the process or change port
+- Supabase down: Check https://status.supabase.com
+- Invalid auth token: Log out and log back in

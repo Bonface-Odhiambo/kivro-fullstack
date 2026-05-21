@@ -1,0 +1,490 @@
+openapi: 3.1.0
+info:
+  title: Kivro API
+  version: 1.0.0
+  description: |
+    The Kivro API lets you generate, verify, and track digital addresses 
+    across all 54 African countries. Use `/api/v1/` for all new integrations.
+  contact:
+    name: Kivro Developer Support
+    url: https://kivro.africa/help
+    email: developers@kivro.africa
+  license:
+    name: Proprietary
+    url: https://kivro.africa/terms
+
+servers:
+  - url: https://kivro-fullstack.vercel.app/api/v1
+    description: Production
+  - url: http://localhost:3001/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Pass your Kivro API key as `Bearer kv_live_<key>` 
+        OR your Supabase JWT for user-authenticated endpoints.
+
+  schemas:
+    Address:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        address_code: { type: string, example: "KEN-NBO-48F2-9XQ1" }
+        phone_number: { type: string, example: "+254712345678" }
+        label:        { type: string, example: "Head Office" }
+        latitude:     { type: number, example: -1.2921 }
+        longitude:    { type: number, example: 36.8219 }
+        country_code: { type: string, example: "KEN" }
+        created_at:   { type: string, format: date-time }
+
+    ApiKey:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        name:             { type: string }
+        key_prefix:       { type: string, example: "kv_live_ab12cd34" }
+        plan:             { type: string, enum: [pro, business, enterprise, government] }
+        status:           { type: string, enum: [active, revoked] }
+        rate_limit_per_min: { type: integer }
+        requests_today:   { type: integer }
+        created_at:       { type: string, format: date-time }
+
+    Error:
+      type: object
+      properties:
+        error:   { type: string }
+        details: { type: array, items: { type: object } }
+
+paths:
+  /addresses/create:
+    post:
+      summary: Create a Kivro address
+      tags: [Addresses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude, phone, country_code]
+              properties:
+                latitude:     { type: number }
+                longitude:    { type: number }
+                phone:        { type: string }
+                label:        { type: string }
+                country_code: { type: string }
+      responses:
+        '201':
+          description: Address created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Address' }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { description: Unauthorized }
+
+  /addresses/{address_code}:
+    get:
+      summary: Resolve an address code
+      tags: [Addresses]
+      parameters:
+        - name: address_code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Address found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Address' }
+        '404': { description: Address not found }
+
+  /keys:
+    get:
+      summary: List API keys
+      tags: [API Keys]
+      responses:
+        '200':
+          description: List of keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys: { type: array, items: { $ref: '#/components/schemas/ApiKey' } }
+    post:
+      summary: Create an API key
+      tags: [API Keys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, plan]
+              properties:
+                name: { type: string }
+                plan: { type: string, enum: [pro, business, enterprise, government] }
+      responses:
+        '201':
+          description: Key created — plaintext shown once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:       { $ref: '#/components/schemas/ApiKey' }
+                  plaintext: { type: string, example: "kv_live_ab12cd34..." }
+
+  /keys/{id}:
+    delete:
+      summary: Revoke an API key
+      tags: [API Keys]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Key revoked }
+        '404': { description: Key not found }
+
+  /webhooks:
+    get:
+      summary: List webhooks
+      tags: [Webhooks]
+      responses:
+        '200':
+          description: Webhook list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhooks: { type: array, items: { type: object } }
+    post:
+      summary: Register a webhook
+      tags: [Webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:    { type: string, format: uri }
+                events: { type: array, items: { type: string } }
+      responses:
+        '201':
+          description: Webhook registered — secret shown once
+
+  /onboarding/business:
+    post:
+      summary: Submit B2B or government onboarding application
+      tags: [Onboarding]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [org_name, country, contact_email, use_case, plan]
+              properties:
+                org_name:      { type: string }
+                org_type:      { type: string, enum: [company, government, ngo, startup] }
+                country:       { type: string }
+                city:          { type: string }
+                contact_name:  { type: string }
+                contact_email: { type: string, format: email }
+                use_case:      { type: string, minLength: 20 }
+                plan:          { type: string, enum: [business, enterprise, government] }
+      responses:
+        '201': { description: Application submitted }
+
+  /referrals/code:
+    get:
+      summary: Get or generate referral code
+      tags: [Referrals]
+      responses:
+        '200':
+          description: Referral code and share URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:     { type: string }
+                  shareUrl: { type: string }
+
+  /health:
+    get:
+      summary: API health check
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:    { type: string }
+                  timestamp: { type: string }
+
+  /billing/subscription:
+    get:
+      summary: Get current subscription
+      tags: [Billing]
+      responses:
+        '200':
+          description: Current subscription
+  /billing/subscribe:
+    post:
+      summary: Create or upgrade subscription
+      tags: [Billing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan]
+              properties:
+                plan:     { type: string, enum: [free, pro, business, enterprise, government] }
+                currency: { type: string, example: XOF }
+                interval: { type: string, enum: [month, year] }
+      responses:
+        '201': { description: Subscription created }
+
+  /billing/invoices:
+    get:
+      summary: List invoices for tenant
+      tags: [Billing]
+      responses:
+        '200':
+          description: Invoice list
+
+  /billing/revenue/{period}:
+    get:
+      summary: Revenue summary for a billing period
+      tags: [Billing]
+      parameters:
+        - name: period
+          in: path
+          required: true
+          schema: { type: string, example: '2026-05' }
+      responses:
+        '200':
+          description: Revenue breakdown
+
+  /ussd/callback:
+    post:
+      summary: Africa's Talking USSD callback
+      tags: [USSD]
+      security: []
+      description: |
+        Receives USSD sessions from Africa's Talking.
+        Register this URL as your USSD callback in the AT dashboard.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                sessionId:   { type: string }
+                phoneNumber: { type: string }
+                text:        { type: string }
+      responses:
+        '200':
+          description: USSD response (CON or END)
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /tenants:
+    post:
+      summary: Create white-label tenant (super-admin)
+      tags: [Tenants]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, name, owner_email, plan]
+              properties:
+                slug:          { type: string }
+                name:          { type: string }
+                owner_email:   { type: string, format: email }
+                plan:          { type: string, enum: [starter, growth, scale, enterprise] }
+                primary_color: { type: string, example: '#F97316' }
+                app_name:      { type: string }
+                default_language: { type: string, example: FR }
+      responses:
+        '201': { description: Tenant created }
+
+  /tenants/{slug}/stats:
+    get:
+      summary: Get tenant usage stats
+      tags: [Tenants]
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: User count, address count, API key count
+
+  /addresses/create:
+    post:
+      summary: Generate a new Kivro address
+      tags: [Addresses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone_number]
+              properties:
+                phone_number: { type: string, example: "+254712345678" }
+                latitude:     { type: number, example: -1.2921 }
+                longitude:    { type: number, example: 36.8219 }
+                label:        { type: string, example: "Home" }
+                country_code: { type: string, example: "KEN" }
+      responses:
+        '201': { description: Address created }
+        '400': { description: Validation error }
+
+  /addresses:
+    get:
+      summary: List all addresses for the authenticated user
+      tags: [Addresses]
+      responses:
+        '200': { description: Address list }
+
+  /addresses/{id}:
+    get:
+      summary: Get address by ID
+      tags: [Addresses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Address detail }
+        '404': { description: Not found }
+    delete:
+      summary: Delete an address
+      tags: [Addresses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Deleted }
+
+  /packages:
+    get:
+      summary: List packages (admin/courier)
+      tags: [Packages]
+      responses:
+        '200': { description: Package list }
+    post:
+      summary: Create a package
+      tags: [Packages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sender_name, recipient_name, recipient_address, qr_code]
+              properties:
+                sender_name:       { type: string }
+                recipient_name:    { type: string }
+                recipient_address: { type: string }
+                qr_code:           { type: string }
+      responses:
+        '201': { description: Package created }
+
+  /packages/{id}/status:
+    patch:
+      summary: Update package status
+      tags: [Packages]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [pending, picked_up, in_transit, delivered, failed] }
+                notes:  { type: string }
+      responses:
+        '200': { description: Status updated }
+
+  /auth/login:
+    post:
+      summary: Authenticate user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200': { description: JWT token returned }
+        '401': { description: Invalid credentials }
+
+  /inbox:
+    get:
+      summary: List inbox messages for authenticated user
+      tags: [Inbox]
+      parameters:
+        - name: filter
+          in: query
+          schema: { type: string, enum: [all, unread, starred, archived] }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+      responses:
+        '200': { description: Message list }
+
+  /inbox/{id}/read:
+    patch:
+      summary: Mark message as read
+      tags: [Inbox]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Marked read }

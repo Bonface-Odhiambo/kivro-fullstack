@@ -1,0 +1,136 @@
+🔧 STORAGE BUCKET SETUP GUIDE - Fix "mime type application/json is not supported"
+==================================================================================
+
+The SQL migration failed because it requires superuser privileges. 
+Instead, follow these steps in the Supabase Dashboard UI:
+
+STEP 1: CREATE STORAGE BUCKETS
+================================
+
+1. Open your Supabase Dashboard
+2. Go to "Storage" in the left sidebar
+3. Click "Create a new bucket" button
+
+BUCKET 1: house-images
+-----------------------
+- Name: house-images
+- Public bucket: ✅ YES (toggle ON)
+- File size limit: 5 MB
+- Allowed MIME types: 
+  * image/jpeg
+  * image/jpg
+  * image/png
+  * image/webp
+  * image/gif
+  * image/heic
+  * image/heif
+- Click "Create bucket"
+
+BUCKET 2: company-logos
+-----------------------
+- Name: company-logos
+- Public bucket: ✅ YES (toggle ON)
+- File size limit: 5 MB
+- Allowed MIME types:
+  * image/jpeg
+  * image/jpg
+  * image/png
+  * image/webp
+  * image/gif
+  * image/svg+xml
+- Click "Create bucket"
+
+
+STEP 2: CONFIGURE RLS POLICIES (For each bucket)
+=================================================
+
+For "house-images" bucket:
+--------------------------
+1. Click on "house-images" bucket
+2. Go to "Policies" tab
+3. Click "New Policy"
+4. Select "For full customization"
+
+Policy 1: Allow Upload
+- Policy name: Allow authenticated uploads
+- Target roles: authenticated
+- Policy command: INSERT
+- WITH CHECK expression: bucket_id = 'house-images'
+- Click "Review" then "Save policy"
+
+Policy 2: Allow Public Read
+- Policy name: Allow public read
+- Target roles: public
+- Policy command: SELECT
+- USING expression: bucket_id = 'house-images'
+- Click "Review" then "Save policy"
+
+Policy 3: Allow User Updates
+- Policy name: Allow user updates
+- Target roles: authenticated
+- Policy command: UPDATE
+- USING expression: bucket_id = 'house-images' AND (storage.foldername(name))[1] = auth.uid()::text
+- Click "Review" then "Save policy"
+
+Policy 4: Allow User Deletes
+- Policy name: Allow user deletes
+- Target roles: authenticated
+- Policy command: DELETE
+- USING expression: bucket_id = 'house-images' AND (storage.foldername(name))[1] = auth.uid()::text
+- Click "Review" then "Save policy"
+
+
+For "company-logos" bucket:
+---------------------------
+Repeat the same 4 policies as above, but replace 'house-images' with 'company-logos'
+
+
+STEP 3: VERIFY SETUP
+====================
+
+1. Go to Storage → house-images
+2. Check that "Public" badge is visible
+3. Check that policies are listed
+4. Try uploading an image from your app
+5. Should work now! ✅
+
+
+ALTERNATIVE: Quick Fix via SQL (if you have superuser access)
+==============================================================
+
+If you have direct database access with superuser privileges, run this:
+
+-- Create buckets via SQL
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES 
+  ('house-images', 'house-images', true, 5242880, 
+   ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']),
+  ('company-logos', 'company-logos', true, 5242880,
+   ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'])
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+
+TROUBLESHOOTING
+===============
+
+If upload still fails after setup:
+1. Check browser console for detailed error logs
+2. Verify bucket names match exactly: 'house-images' and 'company-logos'
+3. Ensure "Public" is enabled on both buckets
+4. Check that allowed MIME types include 'image/jpeg'
+5. Verify RLS policies are active (4 policies per bucket)
+6. Try refreshing your browser/clearing cache
+7. Check Supabase logs in Dashboard → Logs → Storage
+
+
+WHAT THIS FIXES
+===============
+
+✅ "mime type application/json is not supported" error
+✅ 400/406 HTTP errors during upload
+✅ Storage bucket not found errors
+✅ RLS policy blocking uploads
+✅ Missing MIME type configuration

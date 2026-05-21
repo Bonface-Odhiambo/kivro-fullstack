@@ -1,0 +1,381 @@
+================================================================================
+                    KIVRO COMPANY ADDRESS FEATURE
+                    KIVRO ADDRESS GENERATION - TESTING GUIDE (UPDATED)
+================================================================================
+
+Last Updated: October 20, 2025 - All Issues Fixed! 
+=======================================
+
+## PRE-TESTING CHECKLIST
+
+✅ Database migration executed successfully (add_company_addresses.sql)
+✅ Backend server running on port 3001
+✅ Frontend server running on port 8080
+✅ TypeScript errors fixed
+✅ Company address form added to UI
+
+================================================================================
+## TESTING STEPS
+================================================================================
+
+### STEP 1: Login to KIVRO Dashboard
+-----------------------------------
+1. Open browser: http://localhost:8080
+2. Login with your test account
+3. You should see the User Dashboard
+
+Expected Result:
+✓ Dashboard loads successfully
+✓ Sidebar shows "Virtual Addresses" menu item
+✓ No TypeScript errors in console
+
+
+### STEP 2: Test Personal Address Generation (Free Tier)
+--------------------------------------------------------
+1. Click "Virtual Addresses" in sidebar
+2. Verify you see THREE filter tabs:
+   - All Addresses (X)
+   - 👤 Personal (X)
+   - 🏢 Company (X)
+
+3. In the address generation form:
+   - Verify "Address Type" toggle shows:
+     * 👤 Personal (selected by default)
+     * 🏢 Company
+
+4. Keep "Personal" selected
+5. Enter phone number: +252612345678
+6. Click "Generate KIVRO Address"
+
+Expected Result:
+✓ Success toast: "🎉 👤 Personal Address Generated Successfully!"
+✓ New address appears in the list
+✓ Address has standard format: KV-ABC123-4567
+✓ Personal counter increases
+✓ No company badge shown
+
+
+### STEP 3: Subscribe to KIVRO (Required for Company Addresses)
+---------------------------------------------------------------
+1. If not already subscribed:
+   - Go to Dashboard tab
+   - Enter phone number
+   - Click "Pay with M-Pesa"
+   - Click "Simulate Payment" (for testing)
+
+2. Wait for subscription to activate
+
+Expected Result:
+✓ Subscription status shows "Active"
+✓ Success message appears
+
+
+### STEP 4: Test Company Address Generation
+-------------------------------------------
+1. Go back to "Virtual Addresses" tab
+2. In the address generation form:
+   - Click "🏢 Company" button
+
+3. Verify company form appears with fields:
+   - Company Name * (required)
+   - Registration Number (optional)
+   - Company Email (optional)
+   - Company Phone (optional)
+
+4. Fill in company details:
+   Company Name: Kivro Business Solutions
+   Registration Number: REG-2025-12345
+   Company Email: info@kivrobusiness.com
+   Company Phone: +252-1-234567
+
+5. Enter phone number: +252612345678
+6. Click "Generate KIVRO Address"
+
+Expected Result:
+✓ Success toast: "🎉 🏢 Company Address Generated Successfully!"
+✓ New company address appears in the list
+✓ Address has BIZ format: KV-BIZ-ABC123-4567
+✓ Shows 🏢 Company badge
+✓ Shows company name below address
+✓ Company counter increases
+✓ Company form clears after generation
+
+
+### STEP 5: Test Address Filtering
+----------------------------------
+1. Click "All Addresses" tab
+   Expected: Shows both personal and company addresses
+
+2. Click "👤 Personal" tab
+   Expected: Shows only personal addresses
+
+3. Click "🏢 Company" tab
+   Expected: Shows only company addresses
+
+4. Verify counters are correct:
+   - All Addresses (2)
+   - 👤 Personal (1)
+   - 🏢 Company (1)
+
+
+### STEP 6: Test Search Functionality
+-------------------------------------
+1. Click "All Addresses" tab
+2. In search box, type company name: "Kivro Business"
+
+Expected Result:
+✓ Company address appears in results
+✓ Personal address is filtered out
+
+3. Clear search
+4. Search by KIVRO code: "KV-BIZ"
+
+Expected Result:
+✓ Company address appears
+✓ Personal address filtered out
+
+
+### STEP 7: Test Address Display
+--------------------------------
+1. Find the company address in the list
+2. Verify it shows:
+   ✓ Company name in display address
+   ✓ 🏢 Company badge
+   ✓ Company name below (📋 Kivro Business Solutions)
+   ✓ KV-BIZ prefix in code
+
+3. Click "View Details" (eye icon)
+
+Expected Result:
+✓ Modal opens with full address details
+✓ Company information is visible
+
+
+### STEP 8: Test Subscription Requirement
+-----------------------------------------
+1. Create a NEW test account (without subscription)
+2. Login with new account
+3. Go to "Virtual Addresses"
+4. Click "🏢 Company" button
+
+Expected Result:
+✓ Orange warning appears:
+  "⚠️ Company addresses require an active subscription. Please subscribe first."
+
+5. Try to generate company address
+
+Expected Result:
+✓ Error toast: "Subscription Required"
+✓ Address is NOT generated
+
+
+### STEP 9: Test Company Address Limit
+--------------------------------------
+1. With subscribed account that already has 1 company address
+2. Try to generate another company address
+
+Expected Result:
+✓ Error message: "Company address limit reached"
+✓ Message: "You already have a company address. Please contact support to add more."
+
+
+### STEP 10: Test Backend API Directly
+--------------------------------------
+Open PowerShell and test the API:
+
+# Get your JWT token from browser console:
+# localStorage.getItem('supabase.auth.token')
+
+$token = "YOUR_JWT_TOKEN_HERE"
+$headers = @{
+    "Content-Type" = "application/json"
+    "Authorization" = "Bearer $token"
+}
+
+$body = @{
+    phone_number = "+252612345678"
+    company_name = "Test Company Ltd"
+    company_registration_number = "REG-TEST-001"
+    company_email = "test@company.com"
+    company_phone = "+252-1-111111"
+    region = "mogadishu"
+    landmark = "Business District"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:3001/api/addresses/generate-company" -Method Post -Headers $headers -Body $body
+
+Expected Result:
+✓ Status: 201 Created
+✓ Response includes company address with all details
+✓ address_type = "company"
+✓ kivro_code starts with "KV-BIZ-"
+
+
+================================================================================
+## EDGE CASES TO TEST
+================================================================================
+
+### Test 1: Empty Company Name
+------------------------------
+1. Select Company address type
+2. Leave company name empty
+3. Try to generate
+
+Expected: Error - "Company Name Required"
+
+
+### Test 2: Invalid Email Format
+--------------------------------
+1. Enter invalid email: "notanemail"
+2. Try to generate
+
+Expected: Validation error for email format
+
+
+### Test 3: Form Reset After Generation
+---------------------------------------
+1. Generate company address
+2. Check company form fields
+
+Expected: All fields are cleared
+
+
+### Test 4: Switch Between Personal and Company
+-----------------------------------------------
+1. Fill company form
+2. Switch to Personal
+3. Switch back to Company
+
+Expected: Company form data is preserved
+
+
+### Test 5: Mobile Responsiveness
+---------------------------------
+1. Resize browser to mobile size (< 768px)
+2. Check address type toggle
+3. Check company form layout
+
+Expected: 
+✓ Buttons stack vertically on mobile
+✓ Form fields are full width
+✓ All content is readable
+
+
+================================================================================
+## DATABASE VERIFICATION
+================================================================================
+
+Run these queries in Supabase SQL Editor:
+
+-- Check address types
+SELECT 
+    address_type,
+    COUNT(*) as count
+FROM kivro_addresses
+GROUP BY address_type;
+
+Expected:
+personal | 1
+company  | 1
+
+
+-- View company addresses
+SELECT 
+    kivro_code,
+    display_address,
+    company_name,
+    company_registration_number,
+    company_email,
+    is_active
+FROM kivro_addresses
+WHERE address_type = 'company';
+
+Expected: Shows your company address with all details
+
+
+-- Check user address summary
+SELECT * FROM user_addresses_summary;
+
+Expected: Shows counts for personal and company addresses
+
+
+================================================================================
+## TROUBLESHOOTING
+================================================================================
+
+### Issue: "isSubscriptionActive is not defined"
+Solution: ✅ FIXED - Variable added to UserDashboard.tsx
+
+
+### Issue: "company_name does not exist on type KivroAddress"
+Solution: ✅ FIXED - Interface updated with company fields
+
+
+### Issue: Backend port 3001 already in use
+Solution: Backend is already running, no action needed
+
+
+### Issue: Company address not generating
+Check:
+1. User has active subscription
+2. User doesn't already have a company address
+3. Company name is filled in
+4. Backend logs for errors
+
+
+### Issue: Company badge not showing
+Check:
+1. address_type field is set to 'company' in database
+2. Frontend is reading address_type correctly
+3. Browser cache cleared
+
+
+================================================================================
+## SUCCESS CRITERIA
+================================================================================
+
+✅ All 10 testing steps pass
+✅ No TypeScript errors in console
+✅ No runtime errors in browser
+✅ Database correctly stores company addresses
+✅ UI displays company badges and info
+✅ Filtering works correctly
+✅ Search includes company names
+✅ Subscription requirement enforced
+✅ Address limit enforced
+✅ Form validation works
+
+
+================================================================================
+## NEXT STEPS AFTER TESTING
+================================================================================
+
+1. Fix any bugs found during testing
+2. Add more company address features:
+   - Multiple company addresses (premium tier)
+   - Company logo upload
+   - Team member access
+   - Company address analytics
+
+3. Update documentation with test results
+4. Deploy to staging environment
+5. User acceptance testing
+
+
+================================================================================
+## SUPPORT
+================================================================================
+
+If you encounter issues:
+1. Check browser console for errors
+2. Check backend logs: backend/server.js
+3. Verify database schema: add_company_addresses.sql
+4. Review documentation: COMPANY_ADDRESS_FEATURE.txt
+
+For questions: support@kivro.africa
+
+================================================================================
+Version: 1.0
+Created: January 13, 2025
+© 2025 KIVRO. All rights reserved.
+================================================================================

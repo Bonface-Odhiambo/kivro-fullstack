@@ -1,0 +1,181 @@
+====================================================================
+PHONE NUMBER BACKFILL GUIDE
+====================================================================
+
+This guide explains how to backfill existing addresses with phone 
+numbers in their display_address field.
+
+====================================================================
+WHAT THIS DOES
+====================================================================
+
+Updates all existing addresses in the database to include the phone 
+number in their display_address field.
+
+BEFORE: "Boniie the Great, KV-H095NS-4070, Nairobi, Kenya"
+AFTER:  "Boniie the Great, 254706242439 KV-H095NS-4070, Nairobi, Kenya"
+
+The phone number is normalized (spaces/dashes/parentheses removed, 
+leading + removed) and inserted right after the name.
+
+====================================================================
+METHOD 1: SQL MIGRATION (RECOMMENDED)
+====================================================================
+
+This is the fastest and most direct method.
+
+1. Open Supabase SQL Editor or your database client
+
+2. Run the migration file:
+   File: supabase/migrations/20251022110000_backfill_phone_in_display_address.sql
+
+3. Or copy and paste the SQL directly into your SQL editor
+
+4. Execute the migration
+
+5. Check the logs/output to see how many addresses were updated
+
+WHAT IT DOES:
+- Creates normalize_phone() SQL function
+- Updates all addresses with phone numbers
+- Skips addresses that already have phone in display_address
+- Adds index on phone_number column for better performance
+- Shows progress with NOTICE messages
+
+====================================================================
+METHOD 2: NODE.JS SCRIPT
+====================================================================
+
+Use this if you prefer to run through the backend or need more 
+control over the process.
+
+1. Make sure your backend environment is set up:
+   - .env file configured with Supabase credentials
+   - Node.js dependencies installed
+
+2. Navigate to the backend directory:
+   cd backend
+
+3. Run the backfill script:
+   node scripts/backfill-phone-numbers.js
+
+4. Watch the console output for progress and results
+
+WHAT IT DOES:
+- Fetches all addresses from Supabase
+- Normalizes phone numbers using same logic as backend routes
+- Updates each address with phone in display_address
+- Shows detailed progress for each address
+- Provides summary at the end (updated/skipped/errors)
+
+====================================================================
+VERIFICATION
+====================================================================
+
+After running either method, verify the results:
+
+1. Check some addresses in the UI at /dashboard/addresses
+2. Look for the phone number in the display_address
+3. Try sharing an address - the phone should be included
+4. Query the database directly:
+
+   SELECT kivro_code, display_address, phone_number 
+   FROM kivro_addresses 
+   WHERE phone_number IS NOT NULL 
+   LIMIT 10;
+
+====================================================================
+SAFETY FEATURES
+====================================================================
+
+Both methods include safety checks:
+
+✅ Only updates addresses that have a phone_number
+✅ Skips addresses that already have the phone in display_address
+✅ Preserves original address structure
+✅ Sets updated_at timestamp for tracking
+✅ Non-destructive (doesn't delete any data)
+✅ Can be run multiple times safely (idempotent)
+
+====================================================================
+ROLLBACK (IF NEEDED)
+====================================================================
+
+If you need to undo the backfill, you can restore from a backup
+or manually update addresses. There's no automatic rollback since
+the old display_address is overwritten.
+
+PREVENTION: Take a database backup before running the backfill!
+
+====================================================================
+EXAMPLE OUTPUT
+====================================================================
+
+SQL Migration Output:
+  NOTICE: Updated address KV-H095NS-4070: Boniie the Great, KV-H095NS-4070, Nairobi, Kenya -> Boniie the Great, 254706242439 KV-H095NS-4070, Nairobi, Kenya
+  NOTICE: Backfill complete! All existing addresses now include phone numbers.
+
+Node.js Script Output:
+  🚀 Starting phone number backfill...
+  📊 Found 25 addresses to process
+  
+  ✅ Updated KV-H095NS-4070:
+     Before: Boniie the Great, KV-H095NS-4070, Nairobi, Kenya
+     After:  Boniie the Great, 254706242439 KV-H095NS-4070, Nairobi, Kenya
+  
+  ============================================================
+  📈 Backfill Summary:
+  ============================================================
+  ✅ Updated: 25
+  ⏭️  Skipped (already had phone): 0
+  ❌ Errors: 0
+  📊 Total processed: 25
+  ============================================================
+  
+  🎉 Backfill complete!
+
+====================================================================
+NOTES
+====================================================================
+
+- New addresses generated after the backend update will 
+  automatically include phone numbers - no backfill needed
+
+- The backfill only affects EXISTING addresses created before
+  the backend route updates
+
+- Phone numbers are normalized to digits only (no spaces, 
+  dashes, or leading +)
+
+- The backfill maintains the original address format and just
+  inserts the phone number after the name
+
+====================================================================
+TROUBLESHOOTING
+====================================================================
+
+ISSUE: "Function normalize_phone already exists"
+FIX: The migration has already been run. It's safe to skip.
+
+ISSUE: "Cannot connect to database"
+FIX: Check your .env file and Supabase credentials.
+
+ISSUE: Some addresses not updated
+FIX: Check that those addresses have a phone_number value in DB.
+
+ISSUE: Phone appears twice in address
+FIX: The script/migration skips addresses that already have the
+     phone number. This shouldn't happen unless you manually 
+     edited addresses.
+
+====================================================================
+SUPPORT
+====================================================================
+
+If you encounter issues:
+1. Check the console/SQL output for error messages
+2. Verify database connection and credentials
+3. Ensure addresses have phone_number values
+4. Check that display_address field exists and is populated
+
+====================================================================

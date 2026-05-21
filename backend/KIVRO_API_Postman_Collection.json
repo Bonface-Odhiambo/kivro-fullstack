@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "KIVRO Government Agency API",
+    "description": "Official API for government agencies to send messages to KIVRO users' digital inbox",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "kivro-api-v1"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://kivro-fullstack.vercel.app",
+      "type": "string"
+    },
+    {
+      "key": "base_url_dev",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "YOUR_API_KEY_HERE",
+      "type": "string"
+    },
+    {
+      "key": "test_user_id",
+      "value": "8a34a6c4-b41b-47b9-852a-4a666f4c6dc4",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Send Single Message",
+      "item": [
+        {
+          "name": "1. Traffic Violation (Fine)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Traffic Violations\",\n  \"subject\": \"Traffic Violation Notice - Speeding\",\n  \"message_body\": \"Dear Citizen,\\n\\nThis is an official notice regarding a traffic violation detected on your vehicle.\\n\\nViolation Details:\\n- Date: January 10, 2025\\n- Time: 14:35\\n- Location: Maka Al Mukarama Road, Mogadishu\\n- Violation: Exceeding speed limit (85 km/h in 50 km/h zone)\\n\\nFine Amount: $50 USD\\nPayment Due: February 10, 2025\\n\\nYou have the right to appeal this fine within 14 days.\\n\\nSomalia Police Force\",\n  \"message_type\": \"fine\",\n  \"priority\": \"high\",\n  \"reference_number\": \"SPF-2025-001234\",\n  \"metadata\": {\n    \"fine_amount\": 50,\n    \"currency\": \"USD\",\n    \"due_date\": \"2025-02-10\",\n    \"violation_type\": \"speeding\",\n    \"speed_recorded\": 85,\n    \"speed_limit\": 50,\n    \"location\": \"Maka Al Mukarama Road, Mogadishu\",\n    \"can_appeal\": true,\n    \"appeal_deadline\": \"2025-01-24\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send a traffic violation notice with fine details"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Tax Payment Reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Tax & Revenue\",\n  \"subject\": \"Annual Tax Payment Reminder\",\n  \"message_body\": \"Dear Taxpayer,\\n\\nThis is a reminder that your annual tax payment is due soon.\\n\\nTax Year: 2024\\nAmount Due: $500 USD\\nDue Date: February 28, 2025\\n\\nPlease ensure payment is made on time to avoid penalties and interest charges.\\n\\nYou can pay online at www.sra.gov.so or visit any authorized payment center.\\n\\nSomalia Revenue Authority\",\n  \"message_type\": \"invoice\",\n  \"priority\": \"high\",\n  \"reference_number\": \"TAX-2025-001\",\n  \"metadata\": {\n    \"tax_amount\": 500,\n    \"currency\": \"USD\",\n    \"due_date\": \"2025-02-28\",\n    \"tax_year\": 2024,\n    \"payment_methods\": [\"online\", \"bank\", \"payment_center\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send a tax payment reminder with invoice details"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Health Appointment Reminder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Health Services\",\n  \"subject\": \"Medical Appointment Reminder\",\n  \"message_body\": \"Dear Patient,\\n\\nThis is a reminder of your upcoming medical appointment.\\n\\nAppointment Details:\\n- Date: February 15, 2025\\n- Time: 10:30 AM\\n- Location: Mogadishu General Hospital, Building A, Room 205\\n- Doctor: Dr. Ahmed Hassan\\n- Department: General Medicine\\n\\nPlease arrive 15 minutes early for registration.\\n\\nIf you need to reschedule, please call +252-1-234569 at least 24 hours in advance.\\n\\nMinistry of Health\",\n  \"message_type\": \"reminder\",\n  \"priority\": \"normal\",\n  \"reference_number\": \"APPT-2025-5678\",\n  \"metadata\": {\n    \"appointment_date\": \"2025-02-15\",\n    \"appointment_time\": \"10:30 AM\",\n    \"location\": \"Mogadishu General Hospital, Building A, Room 205\",\n    \"doctor_name\": \"Dr. Ahmed Hassan\",\n    \"department\": \"General Medicine\",\n    \"confirmation_required\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send a medical appointment reminder"
+          },
+          "response": []
+        },
+        {
+          "name": "4. General Notice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"General Notices\",\n  \"subject\": \"Welcome to KIVRO Digital Inbox\",\n  \"message_body\": \"Dear Citizen,\\n\\nWelcome to KIVRO's digital inbox system. You will receive all official government communications here.\\n\\nBenefits:\\n- Secure and encrypted\\n- 24/7 access\\n- Instant notifications\\n- Organized by category\\n\\nThank you for using KIVRO.\\n\\nKIVRO Team\",\n  \"message_type\": \"notification\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send a general notification message"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Parking Violation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Traffic Violations\",\n  \"subject\": \"Parking Violation Notice\",\n  \"message_body\": \"Dear Citizen,\\n\\nYour vehicle was found parked in a no-parking zone on January 13, 2025.\\n\\nLocation: Maka Al Mukarama Road\\nFine Amount: $25 USD\\nDue Date: February 13, 2025\\n\\nPlease pay within 30 days to avoid additional penalties.\\n\\nSomalia Police Force\",\n  \"message_type\": \"fine\",\n  \"priority\": \"normal\",\n  \"reference_number\": \"SPF-2025-002345\",\n  \"metadata\": {\n    \"fine_amount\": 25,\n    \"currency\": \"USD\",\n    \"due_date\": \"2025-02-13\",\n    \"violation_type\": \"illegal_parking\",\n    \"location\": \"Maka Al Mukarama Road\",\n    \"can_appeal\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send a parking violation notice"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Court Summons",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Legal & Court\",\n  \"subject\": \"Court Appearance Required\",\n  \"message_body\": \"Dear Citizen,\\n\\nYou are required to appear in court for the following matter:\\n\\nCase Number: CC-2025-789\\nDate: March 5, 2025\\nTime: 9:00 AM\\nLocation: Mogadishu District Court, Courtroom 3\\nJudge: Hon. Justice Mohamed Ali\\n\\nFailure to appear may result in a warrant for your arrest.\\n\\nPlease bring this notice and a valid ID.\\n\\nMogadishu District Court\",\n  \"message_type\": \"alert\",\n  \"priority\": \"urgent\",\n  \"reference_number\": \"CC-2025-789\",\n  \"metadata\": {\n    \"court_date\": \"2025-03-05\",\n    \"court_time\": \"9:00 AM\",\n    \"location\": \"Mogadishu District Court, Courtroom 3\",\n    \"case_number\": \"CC-2025-789\",\n    \"judge\": \"Hon. Justice Mohamed Ali\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Send an urgent court summons"
+          },
+          "response": []
+        }
+      ],
+      "description": "Examples of sending messages to individual users"
+    },
+    {
+      "name": "Send Bulk Messages",
+      "item": [
+        {
+          "name": "1. Community Safety Alert (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [\n    \"{{test_user_id}}\"\n  ],\n  \"category\": \"General Notices\",\n  \"subject\": \"Community Safety Alert\",\n  \"message_body\": \"Dear Residents,\\n\\nPlease be advised of increased security patrols in your area this week due to recent security concerns.\\n\\nPatrol Schedule:\\n- Monday to Friday: 6:00 PM - 6:00 AM\\n- Saturday to Sunday: 24-hour patrols\\n\\nPlease report any suspicious activities to our emergency hotline: +252-1-234567\\n\\nStay safe and vigilant.\\n\\nSomalia Police Force\",\n  \"message_type\": \"alert\",\n  \"priority\": \"urgent\",\n  \"reference_number_prefix\": \"ALERT-2025\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send-bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send-bulk"]
+            },
+            "description": "Send an urgent alert to multiple users"
+          },
+          "response": []
+        },
+        {
+          "name": "2. System Maintenance Notice (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [\n    \"{{test_user_id}}\"\n  ],\n  \"category\": \"General Notices\",\n  \"subject\": \"System Maintenance Notification\",\n  \"message_body\": \"Dear KIVRO Users,\\n\\nWe will be performing scheduled system maintenance:\\n\\nDate: January 15, 2025\\nTime: 2:00 AM - 4:00 AM EAT\\n\\nDuring this time, KIVRO services may be temporarily unavailable.\\n\\nWe apologize for any inconvenience.\\n\\nKIVRO Technical Team\",\n  \"message_type\": \"notification\",\n  \"priority\": \"low\",\n  \"reference_number_prefix\": \"MAINT-2025\",\n  \"metadata\": {\n    \"maintenance_start\": \"2025-01-15T02:00:00Z\",\n    \"maintenance_end\": \"2025-01-15T04:00:00Z\",\n    \"affected_services\": [\"inbox\", \"payments\", \"addresses\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send-bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send-bulk"]
+            },
+            "description": "Send a maintenance notice to all users"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Vaccination Campaign (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [\n    \"{{test_user_id}}\"\n  ],\n  \"category\": \"Health Services\",\n  \"subject\": \"Free Vaccination Campaign\",\n  \"message_body\": \"Dear Citizens,\\n\\nThe Ministry of Health is conducting a free vaccination campaign in your area.\\n\\nVaccination Schedule:\\n- Location: Mogadishu Community Center\\n- Dates: February 1-7, 2025\\n- Time: 8:00 AM - 4:00 PM\\n\\nVaccines Available:\\n- COVID-19 booster\\n- Influenza\\n- Measles (children)\\n\\nNo appointment necessary. Bring your ID and vaccination card.\\n\\nMinistry of Health\",\n  \"message_type\": \"notification\",\n  \"priority\": \"normal\",\n  \"reference_number_prefix\": \"VACC-2025\",\n  \"metadata\": {\n    \"campaign_start\": \"2025-02-01\",\n    \"campaign_end\": \"2025-02-07\",\n    \"location\": \"Mogadishu Community Center\",\n    \"vaccines\": [\"COVID-19\", \"Influenza\", \"Measles\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send-bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send-bulk"]
+            },
+            "description": "Send a health campaign notice to multiple users"
+          },
+          "response": []
+        }
+      ],
+      "description": "Examples of sending messages to multiple users at once"
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Test Invalid API Key",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "invalid_key_12345",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "X-API-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"General Notices\",\n  \"subject\": \"Test Message\",\n  \"message_body\": \"This should fail with invalid API key\",\n  \"message_type\": \"notification\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Test authentication error with invalid API key (Expected: 401 Unauthorized)"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Invalid User ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"00000000-0000-0000-0000-000000000000\",\n  \"category\": \"General Notices\",\n  \"subject\": \"Test Message\",\n  \"message_body\": \"This should fail with invalid user ID\",\n  \"message_type\": \"notification\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Test user validation error (Expected: 404 Not Found)"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Invalid Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\",\n  \"category\": \"Invalid Category\",\n  \"subject\": \"Test Message\",\n  \"message_body\": \"This should fail with invalid category\",\n  \"message_type\": \"notification\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Test category validation error (Expected: 400 Bad Request)"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Missing Required Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{test_user_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inbox/send",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inbox", "send"]
+            },
+            "description": "Test validation error with missing fields (Expected: 400 Bad Request)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test various error scenarios"
+    }
+  ]
+}

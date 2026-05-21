@@ -1,0 +1,267 @@
+# Courier Support Migration Guide
+
+This guide will help you add courier functionality to your KIVRO platform.
+
+## What This Migration Does:
+
+### 1. Profile Enhancements
+- Adds `company_name` field to profiles table for courier businesses
+- Creates index on `user_type` for better query performance
+
+### 2. Courier Profiles Table
+Creates a dedicated table for courier-specific information:
+- Company name
+- Vehicle type (motorcycle, car, van, truck, bicycle, other)
+- Vehicle registration number
+- Service areas (regions they operate in)
+- Verification status
+- Rating system (0-5 stars)
+- Total deliveries counter
+- Successful deliveries counter
+- Contact information
+
+### 3. Delivery Logs Table
+Tracks all courier activities:
+- Pickup and delivery records
+- Taxi pickup/dropoff logs
+- Delivery status tracking
+- Customer information
+- Ratings and feedback
+- Timestamps for all activities
+
+### 4. Security & Permissions
+- Row Level Security (RLS) enabled on all tables
+- Couriers can only view/edit their own data
+- Admins can view all courier data
+- Public can view verified couriers (for search)
+
+### 5. Statistics View
+- `courier_stats` view for analytics
+- Shows success rates, ratings, total deliveries
+- Available to authenticated users
+
+## How to Run the Migration:
+
+### Option A: Using Supabase SQL Editor (Recommended)
+
+1. **Open Supabase Dashboard**
+   - Go to: https://supabase.com/dashboard
+   - Select your KIVRO project
+
+2. **Navigate to SQL Editor**
+   - Click "SQL Editor" in the left sidebar
+   - Click "New query"
+
+3. **Run the Migration**
+   - Copy the contents of: `supabase/migrations/20251016100000_add_courier_support.sql`
+   - Paste into the SQL Editor
+   - Click "Run" button
+
+4. **Verify Success**
+   - You should see "Success. No rows returned" or similar
+   - Check for any error messages
+
+### Option B: Using Supabase CLI
+
+```bash
+# Make sure you're in the project directory
+cd c:\Users\USER\Desktop\KIVRO__3
+
+# Run the migration
+supabase db push
+```
+
+## Verification Steps:
+
+### 1. Check Tables Were Created
+
+Run this query in SQL Editor:
+
+```sql
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name IN ('courier_profiles', 'delivery_logs');
+```
+
+You should see both tables listed.
+
+### 2. Check Columns Were Added
+
+```sql
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'profiles' 
+AND column_name = 'company_name';
+```
+
+Should return the company_name column.
+
+### 3. Check RLS Policies
+
+```sql
+SELECT tablename, policyname 
+FROM pg_policies 
+WHERE tablename IN ('courier_profiles', 'delivery_logs');
+```
+
+Should show multiple policies for each table.
+
+### 4. Check the View
+
+```sql
+SELECT * FROM courier_stats LIMIT 1;
+```
+
+Should return successfully (even if no data yet).
+
+## Testing the Feature:
+
+### 1. Register a Courier Account
+- Go to your KIVRO auth page
+- Click "Sign Up"
+- Select "🚚 Courier - Delivery & taxi services"
+- Complete registration
+
+### 2. Create Courier Profile (Optional - for testing)
+
+Run this in SQL Editor (replace USER_ID with actual courier user ID):
+
+```sql
+INSERT INTO courier_profiles (
+    user_id, 
+    company_name, 
+    vehicle_type, 
+    service_areas,
+    phone_number
+) VALUES (
+    'YOUR_USER_ID_HERE',
+    'Fast Delivery Co',
+    'motorcycle',
+    ARRAY['mogadishu', 'hargeisa'],
+    '+252612345678'
+);
+```
+
+### 3. Test Delivery Logging
+
+```sql
+INSERT INTO delivery_logs (
+    courier_id,
+    kivro_code,
+    delivery_type,
+    status,
+    customer_name
+) VALUES (
+    'YOUR_USER_ID_HERE',
+    'KVR-MGD-2025-001',
+    'delivery',
+    'completed',
+    'John Doe'
+);
+```
+
+### 4. Check Courier Stats
+
+```sql
+SELECT * FROM courier_stats;
+```
+
+## Features Now Available:
+
+### For Couriers:
+✅ Register as courier user type
+✅ Create detailed courier profile
+✅ Specify service areas
+✅ Track delivery history
+✅ Receive ratings from customers
+✅ View success rate statistics
+
+### For Admins:
+✅ View all courier profiles
+✅ Verify courier accounts
+✅ Monitor delivery logs
+✅ Access courier statistics
+✅ Manage courier permissions
+
+### For Platform:
+✅ Courier search functionality
+✅ Rating and review system
+✅ Delivery tracking
+✅ Performance analytics
+✅ Service area filtering
+
+## Database Schema:
+
+### courier_profiles
+- id (UUID, Primary Key)
+- user_id (UUID, Foreign Key to auth.users)
+- company_name (VARCHAR 200)
+- vehicle_type (VARCHAR 50)
+- vehicle_registration (VARCHAR 50)
+- service_areas (TEXT ARRAY)
+- is_verified (BOOLEAN)
+- verification_date (TIMESTAMP)
+- rating (DECIMAL 3,2)
+- total_deliveries (INTEGER)
+- successful_deliveries (INTEGER)
+- phone_number (VARCHAR 20)
+- emergency_contact (VARCHAR 20)
+- notes (TEXT)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP)
+
+### delivery_logs
+- id (UUID, Primary Key)
+- courier_id (UUID, Foreign Key to auth.users)
+- address_id (UUID, Foreign Key to kivro_addresses)
+- kivro_code (VARCHAR 50)
+- delivery_type (VARCHAR 50)
+- status (VARCHAR 50)
+- pickup_time (TIMESTAMP)
+- delivery_time (TIMESTAMP)
+- customer_name (VARCHAR 200)
+- customer_phone (VARCHAR 20)
+- notes (TEXT)
+- rating (INTEGER 1-5)
+- feedback (TEXT)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP)
+
+## Troubleshooting:
+
+### Error: "relation already exists"
+- This means the table was already created
+- Safe to ignore or drop the table first if you want to recreate it
+
+### Error: "policy already exists"
+- The migration drops existing policies first
+- If you still see this, manually drop the policy and rerun
+
+### Error: "function handle_updated_at does not exist"
+- The migration creates this function
+- Make sure you run the entire script, not just parts
+
+### Couriers can't see their profile
+- Check RLS policies are enabled
+- Verify the courier's user_id matches their auth.uid()
+- Check they're logged in
+
+## Next Steps:
+
+1. ✅ Run the migration
+2. ✅ Test courier registration
+3. ✅ Create courier dashboard UI (optional)
+4. ✅ Add courier search feature (optional)
+5. ✅ Implement delivery tracking UI (optional)
+6. ✅ Add rating system UI (optional)
+
+## Support:
+
+If you encounter any issues:
+1. Check the Supabase logs for detailed error messages
+2. Verify all previous migrations ran successfully
+3. Ensure you have proper database permissions
+4. Check that RLS is properly configured
+
+The courier system is now ready to use! 🚚✨

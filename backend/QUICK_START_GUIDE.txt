@@ -1,0 +1,222 @@
+================================================================================
+                    KIVRO API - QUICK START GUIDE
+                    Get Started in 5 Minutes!
+================================================================================
+
+STEP 1: GET YOUR API KEY
+-------------------------
+Contact KIVRO to receive your unique API key.
+
+Example API Key Format:
+  police_api_key_76dddb62d58a7bbcf410a5bb1e3319cf
+
+
+STEP 2: CHOOSE YOUR TOOL
+-------------------------
+Option A: PowerShell (Windows)
+Option B: cURL (Linux/Mac/Git Bash)
+Option C: Postman (Import the collection - see POSTMAN_COLLECTION.json)
+
+
+STEP 3: SEND YOUR FIRST MESSAGE
+--------------------------------
+
+POWERSHELL (Windows):
+---------------------
+# Set your credentials
+$apiKey = "YOUR_API_KEY_HERE"
+$userId = "USER_UUID_HERE"
+
+# Prepare the request
+$headers = @{
+    "Content-Type" = "application/json"
+    "X-API-Key" = $apiKey
+}
+
+$body = @{
+    user_id = $userId
+    category = "General Notices"
+    subject = "Welcome to KIVRO Digital Inbox"
+    message_body = "Dear Citizen, Welcome to KIVRO's digital inbox system. You will receive all official government communications here. Thank you for using KIVRO."
+    message_type = "notification"
+    priority = "normal"
+} | ConvertTo-Json -Depth 10
+
+# Send the message
+$response = Invoke-RestMethod -Uri "https://kivro-fullstack.vercel.app/api/inbox/send" -Method Post -Headers $headers -Body $body
+
+# View the response
+Write-Host "Success! Message ID: $($response.data.id)" -ForegroundColor Green
+
+
+CURL (Linux/Mac/Git Bash):
+---------------------------
+curl -X POST https://kivro-fullstack.vercel.app/api/inbox/send \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY_HERE" \
+  -d '{
+    "user_id": "USER_UUID_HERE",
+    "category": "General Notices",
+    "subject": "Welcome to KIVRO Digital Inbox",
+    "message_body": "Dear Citizen, Welcome to KIVRO'\''s digital inbox system. You will receive all official government communications here. Thank you for using KIVRO.",
+    "message_type": "notification",
+    "priority": "normal"
+  }'
+
+
+STEP 4: VERIFY SUCCESS
+-----------------------
+You should receive a response like this:
+
+{
+  "success": true,
+  "message": "Message sent successfully",
+  "data": {
+    "id": "f1a2b3c4-d5e6-7f8g-9h0i-1j2k3l4m5n6o",
+    "subject": "Welcome to KIVRO Digital Inbox",
+    ...
+  }
+}
+
+The user will see this message in their KIVRO inbox immediately!
+
+
+STEP 5: SEND MORE MESSAGES
+---------------------------
+
+TRAFFIC VIOLATION (with fine):
+-------------------------------
+$body = @{
+    user_id = $userId
+    category = "Traffic Violations"
+    subject = "Speeding Violation Notice"
+    message_body = "You were recorded speeding at 85 km/h in a 50 km/h zone. Fine: $50 USD. Due: Feb 10, 2025."
+    message_type = "fine"
+    priority = "high"
+    reference_number = "SPF-2025-001"
+    metadata = @{
+        fine_amount = 50
+        currency = "USD"
+        due_date = "2025-02-10"
+        can_appeal = $true
+    }
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "https://kivro-fullstack.vercel.app/api/inbox/send" -Method Post -Headers $headers -Body $body
+
+
+TAX REMINDER:
+-------------
+$body = @{
+    user_id = $userId
+    category = "Tax & Revenue"
+    subject = "Tax Payment Due"
+    message_body = "Your annual tax payment of $500 USD is due on February 28, 2025. Please pay on time to avoid penalties."
+    message_type = "invoice"
+    priority = "high"
+    reference_number = "TAX-2025-001"
+    metadata = @{
+        tax_amount = 500
+        currency = "USD"
+        due_date = "2025-02-28"
+    }
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "https://kivro-fullstack.vercel.app/api/inbox/send" -Method Post -Headers $headers -Body $body
+
+
+BULK SEND (Multiple Users):
+----------------------------
+$body = @{
+    user_ids = @($userId1, $userId2, $userId3)
+    category = "General Notices"
+    subject = "System Maintenance Notice"
+    message_body = "KIVRO will undergo maintenance on Jan 15, 2025 from 2-4 AM. Services may be temporarily unavailable."
+    message_type = "notification"
+    priority = "low"
+    reference_number_prefix = "MAINT-2025"
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "https://kivro-fullstack.vercel.app/api/inbox/send-bulk" -Method Post -Headers $headers -Body $body
+
+
+QUICK REFERENCE
+---------------
+
+AVAILABLE CATEGORIES:
+- Traffic Violations
+- Tax & Revenue
+- Health Services
+- Legal & Court
+- Education
+- Utilities
+- Immigration
+- Municipal Services
+- Employment
+- General Notices
+
+MESSAGE TYPES:
+- notification (default)
+- fine
+- invoice
+- certificate
+- alert
+- reminder
+
+PRIORITY LEVELS:
+- low
+- normal (default)
+- high
+- urgent
+
+
+COMMON ERRORS & SOLUTIONS
+--------------------------
+
+Error: "Invalid or inactive API key"
+Solution: Check that your API key is correct and active
+
+Error: "User not found"
+Solution: Verify the user_id is a valid KIVRO user UUID
+
+Error: "Category 'XYZ' not found"
+Solution: Use exact category names from the list above (case-sensitive)
+
+Error: "Valid user_id is required"
+Solution: Ensure user_id is a valid UUID format
+
+
+NEED HELP?
+----------
+📧 Email: api-support@kivro.africa
+📞 Phone: +252-1-KIVRO-API
+📖 Full Documentation: See GOVERNMENT_API_GUIDE.txt
+📦 Postman Collection: Import POSTMAN_COLLECTION.json
+
+
+TESTING TIPS
+------------
+1. Start with a simple "General Notices" message
+2. Test with a known user_id first
+3. Verify the message appears in the user's inbox
+4. Try different categories and priorities
+5. Test error handling with invalid data
+6. Use bulk send for multiple recipients
+
+
+PRODUCTION CHECKLIST
+--------------------
+□ API key stored securely (not in code)
+□ Error handling implemented
+□ Retry logic for failed requests
+□ Logging configured
+□ Rate limits understood (100 req/min)
+□ Team trained on API usage
+□ Monitoring set up
+
+
+That's it! You're ready to send official messages to KIVRO users! 🚀
+
+================================================================================
+Version: 1.0 | Last Updated: January 13, 2025 | © 2025 KIVRO
+================================================================================

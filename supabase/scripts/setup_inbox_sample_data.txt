@@ -1,0 +1,72 @@
+# KIVRO Inbox Sample Data Setup Guide
+
+## Step 1: Get User IDs
+First, run the get_user_ids.sql script to see what users exist in your database:
+
+```sql
+-- Run this in Supabase SQL Editor
+\i supabase/scripts/get_user_ids.sql
+```
+
+This will show you:
+- All confirmed users with their details
+- Total user counts
+- A sample user ID for testing
+
+## Step 2: Create Sample Data
+Run the sample data creation script:
+
+```sql
+-- Run this in Supabase SQL Editor  
+\i supabase/scripts/create_sample_inbox_data.sql
+```
+
+This script will:
+1. Create realistic message senders (government agencies, businesses, legal firms)
+2. Create sample messages for the most recent confirmed user
+3. Include various message types: government, business, legal, utility
+
+## Sample Messages Created:
+
+### Government Messages:
+- **Kenya Revenue Authority**: Tax return filing reminder
+- **NTSA**: Vehicle license renewal notice (with payment)
+- **Nairobi County**: Business permit renewal (with payment)
+
+### Business Messages:
+- **Safaricom**: Monthly bill (with payment)
+- **Kenya Power**: Electricity bill (with payment) 
+- **Equity Bank**: Loan payment reminder (with payment)
+- **Jumia**: Order delivery notification
+
+### Legal/Professional:
+- **Legal Firm**: Property dispute case update (with payment)
+- **Water Company**: Service interruption notice
+
+## Message Features:
+- ✅ Realistic content and formatting
+- ✅ Payment amounts and due dates where applicable
+- ✅ Reference numbers for tracking
+- ✅ Different priority levels (high, medium, low)
+- ✅ Mix of read/unread status
+- ✅ Professional sender information with logos
+- ✅ Verified senders with official status
+
+## After Running Scripts:
+1. Check the inbox in your KIVRO dashboard
+2. Test PDF generation for different message types
+3. Verify payment information displays correctly
+4. Test message status updates (read/unread)
+
+## Customization:
+To add messages for specific users:
+1. Get the user ID from step 1
+2. Modify the create_sample_inbox_data.sql script
+3. Replace the automatic user selection with your specific user ID
+4. Run the modified script
+
+## Database Tables Populated:
+- `message_senders` - Government agencies, businesses, legal firms
+- `inbox_messages` - Sample messages with realistic content
+
+The sample data provides a comprehensive test environment for the KIVRO inbox system with realistic African government and business communications.

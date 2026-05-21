@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Rounded Favicon - KIVRO</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #16a34a;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        canvas {
+            display: none;
+        }
+        .preview-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .preview-grid {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item img {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+        .preview-label {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+        button {
+            background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .info {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .info h3 {
+            margin-top: 0;
+            color: #16a34a;
+        }
+        .step {
+            background: #f9fafb;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #16a34a;
+        }
+        .step-number {
+            display: inline-block;
+            background: #16a34a;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 KIVRO Rounded Favicon Generator</h1>
+        <p class="subtitle">Create beautiful rounded favicons for your KIVRO application</p>
+
+        <div class="info">
+            <h3>📋 Instructions</h3>
+            <p>This tool will generate rounded-corner favicons from your KIVRO logo in multiple sizes.</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Click the button below to generate rounded favicons</strong>
+        </div>
+
+        <button onclick="generateFavicons()">✨ Generate Rounded Favicons</button>
+
+        <div id="preview" class="preview-section" style="display: none;">
+            <h3 style="color: #16a34a;">Preview Your Rounded Favicons:</h3>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <img id="preview16" alt="16x16">
+                    <div class="preview-label">16x16 (Browser Tab)</div>
+                </div>
+                <div class="preview-item">
+                    <img id="preview32" alt="32x32">
+                    <div class="preview-label">32x32 (Bookmark)</div>
+                </div>
+                <div class="preview-item">
+                    <img id="preview180" alt="180x180">
+                    <div class="preview-label">180x180 (Apple Touch)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step" style="display: none;" id="step2">
+            <span class="step-number">2</span>
+            <strong>Download each favicon by right-clicking and "Save Image As..."</strong>
+            <ul>
+                <li>Save 16x16 as: <code>favicon-16x16.png</code></li>
+                <li>Save 32x32 as: <code>favicon-32x32.png</code></li>
+                <li>Save 180x180 as: <code>apple-touch-icon.png</code></li>
+            </ul>
+        </div>
+
+        <div class="step" style="display: none;" id="step3">
+            <span class="step-number">3</span>
+            <strong>Place the downloaded files in your <code>public</code> folder</strong>
+        </div>
+
+        <div class="info" style="display: none;" id="finalInfo">
+            <h3>✅ All Done!</h3>
+            <p>Your rounded favicons are ready! The HTML file has been automatically updated to use the new favicons.</p>
+            <p><strong>Note:</strong> You may need to clear your browser cache to see the new favicons.</p>
+        </div>
+    </div>
+
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas32" width="32" height="32"></canvas>
+    <canvas id="canvas180" width="180" height="180"></canvas>
+
+    <script>
+        function generateFavicons() {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = function() {
+                // Generate 16x16
+                generateRoundedFavicon(img, 'canvas16', 16, 3);
+                document.getElementById('preview16').src = document.getElementById('canvas16').toDataURL();
+
+                // Generate 32x32
+                generateRoundedFavicon(img, 'canvas32', 32, 6);
+                document.getElementById('preview32').src = document.getElementById('canvas32').toDataURL();
+
+                // Generate 180x180
+                generateRoundedFavicon(img, 'canvas180', 180, 30);
+                document.getElementById('preview180').src = document.getElementById('canvas180').toDataURL();
+
+                // Show preview and steps
+                document.getElementById('preview').style.display = 'block';
+                document.getElementById('step2').style.display = 'block';
+                document.getElementById('step3').style.display = 'block';
+                document.getElementById('finalInfo').style.display = 'block';
+            };
+            img.src = 'kivro-logo.jpg';
+        }
+
+        function generateRoundedFavicon(img, canvasId, size, radius) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+
+            // Create rounded rectangle path
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+
+            // Clip to rounded rectangle
+            ctx.clip();
+
+            // Draw image
+            ctx.drawImage(img, 0, 0, size, size);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+# Database Migration Guide - Add House Details
+
+This guide will help you add the `house_number` and `house_image_url` columns to your database.
+
+## Step 1: Run the Migration
+
+### Option A: Using Supabase CLI (Recommended)
+1. Make sure you have Supabase CLI installed
+2. Run the migration:
+   ```bash
+   supabase db push
+   ```
+
+### Option B: Manual SQL Execution
+1. Go to your Supabase Dashboard: https://supabase.com/dashboard
+2. Navigate to your project
+3. Click on "SQL Editor" in the left sidebar
+4. Copy and paste the contents of: supabase/migrations/20251016000000_add_house_details.sql
+5. Click "Run" to execute the migration
+
+## Step 2: Verify the Migration
+
+Run this query in SQL Editor to verify the columns were added:
+
+```sql
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'kivro_addresses' 
+AND column_name IN ('house_number', 'house_image_url');
+```
+
+You should see both columns listed.
+
+## Step 3: Verify Storage Bucket
+
+Check that the 'house-images' bucket was created:
+
+1. Go to Storage in Supabase Dashboard
+2. You should see a bucket named 'house-images'
+3. It should be set to PUBLIC access
+
+## Step 4: Restart Your Backend Server
+
+After the migration is complete, restart your backend server:
+
+```bash
+cd backend
+npm start
+```
+
+## What This Migration Does:
+
+1. ✅ Adds `house_number` column (VARCHAR 50) - stores house numbers like "123", "A-45"
+2. ✅ Adds `house_image_url` column (TEXT) - stores URLs to uploaded house images
+3. ✅ Creates 'house-images' storage bucket for image uploads
+4. ✅ Sets up storage policies for authenticated users to upload/manage images
+5. ✅ Adds database indexes for better query performance
+
+## Testing the Feature:
+
+1. Log into your KIVRO dashboard
+2. Go to "Addresses" tab
+3. Click "Edit" button on any address
+4. Add a house number (e.g., "123")
+5. Upload a house image
+6. Click "Save Changes"
+7. The address should update successfully!
+
+## Troubleshooting:
+
+### Error: "bucket already exists"
+- This is normal if you've run the migration before
+- The migration uses "ON CONFLICT DO NOTHING" so it's safe to run multiple times
+
+### Error: "column already exists"
+- This means the migration was already run
+- You can safely ignore this error
+
+### Error: "Cannot PATCH /api/addresses/.../update"
+- Make sure your backend server is running
+- Check that the addresses.js route file was updated with the new endpoint
+- Verify your .env file has the correct SUPABASE_URL and SUPABASE_SERVICE_KEY
+
+### Images not uploading
+- Check Supabase Storage policies are correctly set
+- Verify the 'house-images' bucket exists and is public
+- Check browser console for any errors
+
+## Need Help?
+
+If you encounter any issues:
+1. Check the backend console logs for detailed error messages
+2. Check the browser console (F12) for frontend errors
+3. Verify your Supabase credentials in .env file
+4. Make sure you're using the latest code from the repository

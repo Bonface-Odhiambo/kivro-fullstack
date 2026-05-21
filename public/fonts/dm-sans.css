@@ -1,0 +1,8 @@
+/* DM Sans — self-hosted via CSS import with font-display: swap
+   This removes the render-blocking <link> from index.html.
+   Replace the @import below with actual woff2 files for full self-hosting:
+   1. Download from https://fonts.google.com/specimen/DM+Sans
+   2. Convert to woff2 and place in public/fonts/
+   3. Replace @import with @font-face blocks pointing to /fonts/dm-sans-*.woff2
+*/
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');

@@ -1,0 +1,883 @@
+import React, { useState, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Copy, 
+  Share2, 
+  MessageCircle, 
+  Mail, 
+  Phone, 
+  Facebook, 
+  Twitter, 
+  Linkedin,
+  X,
+  Check,
+  Send,
+  Loader2,
+  MapPin,
+  ExternalLink,
+  AlertCircle,
+  Navigation
+} from 'lucide-react';
+
+interface KivroShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  shareUrl: string;
+  title?: string;
+  description?: string;
+  addressId?: string;
+  addressData?: any;
+}
+
+const KivroShareModal: React.FC<KivroShareModalProps> = ({
+  isOpen,
+  onClose,
+  shareUrl,
+  title = "Share KIVRO Address",
+  description = "Share your KIVRO address with others",
+  addressId,
+  addressData
+}) => {
+  const [copied, setCopied] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showSMSForm, setShowSMSForm] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [smsRecipient, setSmsRecipient] = useState('');
+  const [personalMessage, setPersonalMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  // Memoize the formatted address to prevent infinite loops
+  const formattedAddress = useMemo(() => {
+    if (!addressData) return 'KIVRO Address';
+
+    // Extract user name and address details from display_address
+    const displayAddress = addressData.display_address || '';
+    const kivroCode = addressData.kivro_code || '';
+    const region = addressData.region || '';
+    const district = addressData.district || '';
+    const landmark = addressData.landmark || '';
+    
+    // Try to extract user name from display_address (usually first part before comma)
+    let userName = '';
+    let addressPart = displayAddress;
+    
+    if (displayAddress.includes(',')) {
+      const parts = displayAddress.split(',');
+      // First part is usually the name if it doesn't look like an address
+      const firstPart = parts[0].trim();
+      if (firstPart && !firstPart.includes('KV-') && !firstPart.includes('+254')) {
+        userName = firstPart;
+        addressPart = parts.slice(1).join(',').trim();
+      }
+    }
+
+    // Build comprehensive address
+    let fullAddress = '';
+    
+    if (userName) {
+      fullAddress += `👤 ${userName}\n`;
+    }
+    
+    fullAddress += `🏠 ${kivroCode}`;
+    
+    if (addressPart && addressPart !== kivroCode) {
+      fullAddress += `\n📍 ${addressPart}`;
+    }
+    
+    if (region) {
+      fullAddress += `\n🌍 ${region}${district ? `, ${district}` : ''}`;
+    }
+    
+    if (landmark && !addressPart.includes(landmark)) {
+      fullAddress += `\n🗺️ Near: ${landmark}`;
+    }
+
+    // Add house image reference if available
+    if (addressData.house_image_url) {
+      fullAddress += `\n📸 House photo: ${addressData.house_image_url}`;
+    }
+
+    return fullAddress || displayAddress || kivroCode || 'KIVRO Address';
+  }, [addressData]);
+
+  // Helper function to get formatted address (now just returns memoized value)
+  const getFormattedAddress = () => formattedAddress;
+
+  const handleCopy = async () => {
+    try {
+      // Use clean address format for copying with map link if available
+      const addressText = getFormattedAddress();
+      const mapLink = addressData?.latitude && addressData?.longitude 
+        ? `\n\n📍 View on map: https://www.google.com/maps?q=${addressData.latitude},${addressData.longitude}`
+        : '';
+      const shareText = `🏠 My KIVRO Address:\n\n${addressText}${mapLink}\n\n📱 Share Link: ${shareUrl}\n\n📍 Tap the link to navigate directly to my location.\n🎯 Perfect for deliveries, visits, and mail!\n\n✨ Get your own digital address at kivro.africa`;
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      toast({
+        title: "KIVRO Address Copied!",
+        description: "The address has been copied to your clipboard",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Please copy the address manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailRecipient.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter a recipient email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!addressId) {
+      toast({
+        title: "Error",
+        description: "Address ID is required for email sharing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('supabase.auth.token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/addresses/share-via-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          address_id: addressId,
+          recipient_email: emailRecipient,
+          message: personalMessage.trim() || undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Email Sent! 📧",
+          description: `KIVRO address shared with ${emailRecipient}`,
+        });
+        setEmailRecipient('');
+        setPersonalMessage('');
+        setShowEmailForm(false);
+      } else {
+        throw new Error(data.message || 'Failed to send email');
+      }
+    } catch (error) {
+      console.error('Email sharing error:', error);
+      toast({
+        title: "Email Failed",
+        description: error.message || "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendSMS = async () => {
+    if (!smsRecipient.trim()) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter a recipient phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!addressId) {
+      toast({
+        title: "Error",
+        description: "Address ID is required for SMS sharing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('supabase.auth.token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/addresses/share-via-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          address_id: addressId,
+          recipient_phone: smsRecipient,
+          message: personalMessage.trim() || undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "SMS Sent! 📱",
+          description: `KIVRO address shared with ${smsRecipient}`,
+        });
+        setSmsRecipient('');
+        setPersonalMessage('');
+        setShowSMSForm(false);
+      } else {
+        throw new Error(data.message || 'Failed to send SMS');
+      }
+    } catch (error) {
+      console.error('SMS sharing error:', error);
+      toast({
+        title: "SMS Failed",
+        description: error.message || "Failed to send SMS. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const shareOptions = [
+    {
+      name: "Email",
+      icon: Mail,
+      color: "bg-red-500 hover:bg-red-600",
+      textColor: "text-white",
+      action: () => {
+        if (addressId) {
+          setShowEmailForm(true);
+        } else {
+          const addressText = getFormattedAddress();
+          const subject = "My KIVRO Address";
+          const mapLink = addressData?.latitude && addressData?.longitude 
+            ? `\n\n📍 View on map: https://www.google.com/maps?q=${addressData.latitude},${addressData.longitude}`
+            : '';
+          const body = `Hi! I wanted to share my KIVRO address with you:\n\n${addressText}${mapLink}\n\n📱 Share Link: ${shareUrl}\n\n📍 Click the link to navigate directly to my location.\n🎯 Perfect for deliveries, visits, and mail!\n\n✨ Get your own digital address at kivro.africa`;
+          window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+        }
+      }
+    },
+    {
+      name: "SMS",
+      icon: Phone,
+      color: "bg-blue-500 hover:bg-blue-600",
+      textColor: "text-white",
+      action: () => {
+        if (addressId) {
+          setShowSMSForm(true);
+        } else {
+          const addressText = getFormattedAddress();
+          const message = `🏠 My KIVRO Address:\n\n${addressText}\n\n📱 ${shareUrl}\n\n📍 Tap to navigate directly to my location! Get your own at kivro.africa`;
+          window.open(`sms:?body=${encodeURIComponent(message)}`);
+        }
+      }
+    },
+    {
+      name: "WhatsApp",
+      icon: MessageCircle,
+      color: "bg-green-500 hover:bg-green-600",
+      textColor: "text-white",
+      action: async () => {
+        const addressText = getFormattedAddress();
+        const mapLink = addressData?.latitude && addressData?.longitude 
+          ? `\n\n📍 View on map: https://www.google.com/maps?q=${addressData.latitude},${addressData.longitude}`
+          : '';
+        
+        let message = `🏠 My KIVRO Address:\n\n${addressText}${mapLink}\n\n📱 Share Link: ${shareUrl}\n\n📍 Tap the link to navigate directly to my location!\n🎯 Perfect for deliveries, visits, and mail!\n\n✨ Get your own digital address at kivro.africa`;
+        
+        // If house image is available, try to share it
+        if (addressData?.house_image_url) {
+          // For WhatsApp, we can use the Web Share API if available (mobile)
+          if (navigator.share && navigator.canShare) {
+            try {
+              // Try to fetch the image and share it
+              const response = await fetch(addressData.house_image_url);
+              
+              // Check if the response is actually an image
+              const contentType = response.headers.get('content-type');
+              if (contentType && contentType.startsWith('image/')) {
+                const blob = await response.blob();
+                const file = new File([blob], 'house-photo.jpg', { type: blob.type });
+                
+                if (navigator.canShare({ files: [file] })) {
+                  await navigator.share({
+                    title: '🏠 My KIVRO Address',
+                    text: message,
+                    files: [file]
+                  });
+                  return;
+                }
+              } else {
+                console.log('House image URL does not return a valid image, sharing text only');
+              }
+            } catch (error) {
+              console.log('Native share with image failed, falling back to text share:', error);
+            }
+          }
+          
+          // Only include image URL if it's likely to be a valid image
+          try {
+            const response = await fetch(addressData.house_image_url, { method: 'HEAD' });
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.startsWith('image/')) {
+              message += `\n\n📸 House Photo: ${addressData.house_image_url}`;
+            }
+          } catch (error) {
+            console.log('Could not verify image URL, sharing without image link');
+          }
+        }
+        
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+      }
+    },
+    {
+      name: "Facebook",
+      icon: Facebook,
+      color: "bg-blue-600 hover:bg-blue-700",
+      textColor: "text-white",
+      action: () => {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+      }
+    },
+    {
+      name: "Twitter",
+      icon: Twitter,
+      color: "bg-sky-500 hover:bg-sky-600",
+      textColor: "text-white",
+      action: () => {
+        const addressText = getFormattedAddress();
+        const text = `🏠 Check out my KIVRO address: ${addressText}\n\n📍 Tap to navigate directly to my location! Get your own digital address at kivro.africa`;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+      }
+    },
+    {
+      name: "LinkedIn",
+      icon: Linkedin,
+      color: "bg-blue-700 hover:bg-blue-800",
+      textColor: "text-white",
+      action: () => {
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
+      }
+    }
+  ];
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        const addressText = getFormattedAddress();
+        let shareData = {
+          title: title,
+          text: `🏠 My KIVRO Address: ${addressText}\n\n📍 Tap to navigate directly to my location! Get your own at kivro.africa`,
+          url: shareUrl,
+        };
+
+        // Try to include house image if available
+        if (addressData?.house_image_url && navigator.canShare) {
+          try {
+            const response = await fetch(addressData.house_image_url);
+            const contentType = response.headers.get('content-type');
+            
+            // Only include if it's actually an image
+            if (contentType && contentType.startsWith('image/')) {
+              const blob = await response.blob();
+              const file = new File([blob], 'house-photo.jpg', { type: blob.type });
+              
+              if (navigator.canShare({ files: [file] })) {
+                shareData = {
+                  ...shareData,
+                  files: [file]
+                };
+              }
+            } else {
+              console.log('House image URL does not return a valid image, sharing text only');
+            }
+          } catch (error) {
+            console.log('Could not include image in native share, sharing text only:', error);
+          }
+        }
+
+        await navigator.share(shareData);
+      } catch (error) {
+        // User cancelled or error occurred, fallback to copy
+        handleCopy();
+      }
+    } else {
+      handleCopy();
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            Share KIVRO Address
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Email Form */}
+          {showEmailForm && (
+            <div className="space-y-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-red-800">📧 Send via Email</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowEmailForm(false)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="email-recipient">Recipient Email</Label>
+                  <Input
+                    id="email-recipient"
+                    type="email"
+                    placeholder="friend@example.com"
+                    value={emailRecipient}
+                    onChange={(e) => setEmailRecipient(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="email-message">Personal Message (Optional)</Label>
+                  <Textarea
+                    id="email-message"
+                    placeholder="Add a personal message..."
+                    value={personalMessage}
+                    onChange={(e) => setPersonalMessage(e.target.value)}
+                    rows={2}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={isLoading || !emailRecipient.trim()}
+                  className="w-full bg-red-600 hover:bg-red-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send Email
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* SMS Form */}
+          {showSMSForm && (
+            <div className="space-y-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold text-blue-800">📱 Send via SMS</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSMSForm(false)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="sms-recipient">Recipient Phone Number</Label>
+                  <Input
+                    id="sms-recipient"
+                    type="tel"
+                    placeholder="+252 61 234 5678"
+                    value={smsRecipient}
+                    onChange={(e) => setSmsRecipient(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="sms-message">Personal Message (Optional)</Label>
+                  <Textarea
+                    id="sms-message"
+                    placeholder="Add a personal message..."
+                    value={personalMessage}
+                    onChange={(e) => setPersonalMessage(e.target.value)}
+                    rows={2}
+                    className="mt-1"
+                    maxLength={300}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {personalMessage.length}/300 characters
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={handleSendSMS}
+                  disabled={isLoading || !smsRecipient.trim()}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Send SMS
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Google Maps Embed with PIN */}
+          {!showEmailForm && !showSMSForm && addressData?.latitude && addressData?.longitude && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-green-600" />
+                Location on Map
+              </label>
+              <div className="relative rounded-lg overflow-hidden border-2 border-green-200">
+                <iframe
+                  width="100%"
+                  height="250"
+                  frameBorder="0"
+                  style={{ border: 0 }}
+                  src={`https://www.google.com/maps?q=${addressData.latitude},${addressData.longitude}&output=embed&z=16`}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                
+                {/* Address Overlay on Map Preview */}
+                <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-2 border border-green-500">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-900 truncate">
+                        {getFormattedAddress()}
+                      </p>
+                      {addressData.short_code && (
+                        <p className="text-xs font-mono text-purple-600">
+                          {addressData.short_code}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href={`https://www.google.com/maps?q=${addressData.latitude},${addressData.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-2 right-2 bg-white px-3 py-1.5 rounded-lg shadow-md text-xs font-medium text-green-600 hover:bg-green-50 flex items-center gap-1 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Open in Maps
+                </a>
+              </div>
+              <p className="text-xs text-center text-green-700 font-medium bg-green-50 py-1 px-2 rounded">
+                📍 Recipients will see this address on the map and navigate directly
+              </p>
+              
+              {/* Deep Links to Navigation Apps */}
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${addressData.latitude},${addressData.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center py-2 px-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <p className="text-xs font-medium text-gray-700">Google Maps</p>
+                </a>
+                <a
+                  href={`http://maps.apple.com/?ll=${addressData.latitude},${addressData.longitude}&q=KIVRO+Address`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center py-2 px-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <p className="text-xs font-medium text-gray-700">Apple Maps</p>
+                </a>
+                <a
+                  href={`https://waze.com/ul?ll=${addressData.latitude},${addressData.longitude}&navigate=yes`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-center py-2 px-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <p className="text-xs font-medium text-gray-700">Waze</p>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Short Code Display */}
+          {!showEmailForm && !showSMSForm && addressData?.short_code && (
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4 text-center">
+              <p className="text-sm font-medium text-gray-600 mb-2">Short Code</p>
+              <p className="text-3xl font-bold text-purple-600 font-mono tracking-wider">
+                {addressData.short_code}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">Easy to remember and share</p>
+            </div>
+          )}
+
+          {/* House Image Preview */}
+          {!showEmailForm && !showSMSForm && addressData?.house_image_url && (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-600 rounded flex items-center justify-center">
+                  <span className="text-white text-xs">📸</span>
+                </div>
+                House Photo (Will be shared)
+              </label>
+              <div className="relative rounded-lg overflow-hidden border-2 border-blue-200">
+                <img 
+                  src={addressData.house_image_url} 
+                  alt="House" 
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    // Hide the image and show an error message
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <div class="text-center text-gray-500">
+                            <div class="text-4xl mb-2">📷</div>
+                            <p class="text-sm">Image not available</p>
+                            <p class="text-xs">The house photo could not be loaded</p>
+                          </div>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+                <div className="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-2 border border-blue-500">
+                  <p className="text-xs text-center text-blue-700 font-medium">
+                    📸 This photo will be included when sharing via WhatsApp and other apps
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Share URL Display */}
+          {!showEmailForm && !showSMSForm && addressData?.share_token && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Navigation className="h-4 w-4 text-green-600" />
+                Direct Navigation Link
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={`${window.location.origin}/kv/${addressData.share_token}`}
+                  readOnly
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 font-mono"
+                />
+                <Button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(`${window.location.origin}/kv/${addressData.share_token}`);
+                      toast({
+                        title: "Link Copied!",
+                        description: "Recipients will navigate directly to your location",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Copy Failed",
+                        description: "Please copy the link manually",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                <p className="text-xs text-green-800 flex items-center gap-1">
+                  <Navigation className="h-3 w-3" />
+                  <strong>Works like GPS sharing:</strong> Opens navigation app automatically on mobile devices
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Address Display with Copy Button */}
+          {!showEmailForm && !showSMSForm && (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">
+                Your KIVRO Address
+              </label>
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-lg p-3">
+                <p className="text-center text-base font-bold text-gray-900 break-words">
+                  {getFormattedAddress()}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={getFormattedAddress()}
+                  readOnly
+                  className="flex-1 bg-white border-gray-300 text-gray-900 font-medium"
+                />
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  size="sm"
+                  className={`px-3 transition-all duration-200 ${
+                    copied 
+                      ? 'bg-green-50 border-green-200 text-green-700' 
+                      : 'hover:bg-green-50 hover:border-green-200'
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-center text-gray-500">
+                This is your complete, formatted KIVRO address ready to share
+              </p>
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Quick Share
+              </label>
+              <Button
+                onClick={handleNativeShare}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                Share
+              </Button>
+            </div>
+          </div>
+
+          {/* Share Options Grid */}
+          {!showEmailForm && !showSMSForm && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Share via
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {shareOptions.map((option) => (
+                  <Button
+                    key={option.name}
+                    onClick={option.action}
+                    variant="outline"
+                    className="flex flex-col items-center gap-1.5 h-auto py-3 px-2 hover:shadow-md transition-all duration-200 border-gray-200 hover:border-green-300"
+                  >
+                    <div className={`p-1.5 rounded-full ${option.color} ${option.textColor}`}>
+                      <option.icon className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">
+                      {option.name}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Get Your Own Address CTA */}
+          {!showEmailForm && !showSMSForm && (
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                    Don't have a KIVRO address yet?
+                  </h4>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Get your own digital address in seconds! Make sure you're at your location when generating for accurate results.
+                  </p>
+                  <a
+                    href="/dashboard/addresses"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
+                  >
+                    Generate Your Address
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Location Importance Notice */}
+          {!showEmailForm && !showSMSForm && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-blue-800 font-medium mb-1">
+                    📍 Important: Be at your location
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    For best results, generate your address while at your house, business, or specific landmark. This ensures accurate GPS coordinates.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* KIVRO Branding */}
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+              <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
+              <span>Powered by KIVRO</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default KivroShareModal;

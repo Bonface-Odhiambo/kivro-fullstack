@@ -1,0 +1,3 @@
+regex:AC[a-z0-9]{32}==>ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+regex:SK[a-z0-9]{32}==>your_auth_token_here
+regex:\+1[0-9]{10}==>+1234567890
