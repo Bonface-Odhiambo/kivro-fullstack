@@ -108,8 +108,6 @@ const App = () => (
             <Route path="/overview" element={<Dashboard />} />
             <Route path="/business" element={<BusinessOnboarding />} />
             <Route path="/reseller" element={<ResellerPortal />} />
-            <Route path="/dashboard/subscription" element={<Subscription />} />
-
             <Route path="/dashboard" element={<UserDashboardLayout />}>
               <Route index element={<UserDashboard />} />
               <Route path="addresses" element={<KivroAddresses />} />
@@ -121,6 +119,7 @@ const App = () => (
               <Route path="shared" element={<Shared />} />
               <Route path="notifications" element={<UserNotifications />} />
               <Route path="settings" element={<UserSettings />} />
+              <Route path="subscription" element={<Subscription />} />
             </Route>
             <Route path="/admin" element={<AdminDashboardLayout />}>
               <Route index element={<AdminDashboardReal />} />

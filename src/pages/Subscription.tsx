@@ -12,7 +12,6 @@ import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency, convertFromUSD, getTenantCurrency } from '@/lib/currency';
 import { CheckCircle2, Zap, Building2, ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
-import UserDashboardLayout from '../components/UserDashboardLayout';
 
 interface Subscription {
   id: string;
@@ -135,8 +134,7 @@ export default function Subscription() {
   };
 
   return (
-    <UserDashboardLayout>
-      <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
         <div>
           <h1 className="text-2xl font-bold mb-1">Subscription</h1>
           <p className="text-muted-foreground text-sm">Manage your plan and billing.</p>
@@ -226,7 +224,6 @@ export default function Subscription() {
             );
           })}
         </div>
-      </div>
-    </UserDashboardLayout>
+    </div>
   );
 }
