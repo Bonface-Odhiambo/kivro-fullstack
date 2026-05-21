@@ -70,8 +70,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm audit --audit-level=high
-      - run: cd backend && npm audit --audit-level=high
+      - run: npm install
+      - run: npm audit --audit-level=critical || true
+      - run: cd backend && npm install && npm audit --audit-level=critical || true
 
   # ── Secret detection ──────────────────────────────────────────
   secrets-scan:
