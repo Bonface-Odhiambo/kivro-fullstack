@@ -79,11 +79,11 @@ export default function UserManagement() {
       return;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase
       .from('profiles')
       .select('user_type')
       .eq('user_id', session.user.id)
-      .single();
+      .single() as any);
 
     if (profile?.user_type !== 'admin') {
       toast({
