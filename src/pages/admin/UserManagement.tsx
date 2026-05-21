@@ -55,6 +55,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserType, setSelectedUserType] = useState('all');
+  const [selectedCountry, setSelectedCountry] = useState('all');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -191,12 +192,17 @@ export default function UserManagement() {
     }
   };
 
+  const allCountries = Array.from(new Set(users.map(u => u.profile?.country).filter(Boolean))).sort();
+
   const filteredUsers = users.filter(user => {
     const userName = user.profile?.full_name || '';
+    const country = (user.profile?.country || '').toLowerCase();
     const matchesSearch = userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.profile?.phone_number || '').toLowerCase().includes(searchTerm.toLowerCase());
+                         (user.profile?.phone_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         country.includes(searchTerm.toLowerCase());
     const matchesType = selectedUserType === 'all' || user.profile?.user_type === selectedUserType;
-    return matchesSearch && matchesType;
+    const matchesCountry = selectedCountry === 'all' || (user.profile?.country || '') === selectedCountry;
+    return matchesSearch && matchesType && matchesCountry;
   });
 
   const userStats = [
@@ -258,7 +264,7 @@ export default function UserManagement() {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <select
                 value={selectedUserType}
                 onChange={(e) => setSelectedUserType(e.target.value)}
@@ -266,13 +272,20 @@ export default function UserManagement() {
               >
                 <option value="all">All Types</option>
                 <option value="admin">Admin</option>
+                <option value="courier">Courier</option>
                 <option value="staff">Staff</option>
-                <option value="customer">Customer</option>
+                <option value="user">User</option>
               </select>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
+              <select
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                className="px-3 py-2 border border-input rounded-md bg-background text-foreground"
+              >
+                <option value="all">All Countries</option>
+                {allCountries.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
           </div>
         </CardHeader>
@@ -350,7 +363,7 @@ export default function UserManagement() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">Somalia</span>
+                        <span className="text-sm">{user.profile?.country || user.profile?.city || '—'}</span>
                       </div>
                     </TableCell>
                     
