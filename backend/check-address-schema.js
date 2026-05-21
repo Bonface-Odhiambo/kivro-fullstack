@@ -7,8 +7,8 @@ require('dotenv').config();
 
 // Initialize Supabase with service role key
 const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://dfcuyinwearuhlhrdssx.supabase.co',
-  process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRmY3V5aW53ZWFydWhsaHJkc3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODg1ODg5NSwiZXhwIjoyMDc0NDM0ODk1fQ.k_L_Jw3h2YqJk7B6BxQ9wFhNnQqBhJh5vC7b8wFfHkY',
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
   {
     auth: {
       autoRefreshToken: false,
